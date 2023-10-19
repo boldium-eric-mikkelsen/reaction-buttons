@@ -3,7 +3,7 @@
    Plugin Name: Reaction Buttons
    Plugin URI: http://blog.jl42.de/reaction-buttons/
    Description: Adds Buttons for very simple and fast feedback to your post. Inspired by Blogger.
-   Version: 2.1.0
+   Version: 2.1.6
    Author: Jakob Lenfers
    Author URI: http://blog.jl42.de
    Text Domain: reaction_buttons
@@ -73,7 +73,7 @@ function reaction_buttons_html() {
 
 	// if use of cookies is activated, check for them
 	$cookie = "";
-	if($use_cookies){
+	if($use_cookies && isset($_COOKIE["reaction_buttons_" . $post_id])){
 		$json = stripslashes($_COOKIE["reaction_buttons_" . $post_id]);
 		$cookie = json_decode($json, true);
 	}
@@ -167,7 +167,7 @@ function reaction_buttons_html() {
 			$button_id . "');\">";
         }
         $html .= "<div>";
-        $html .= "<span class='button_name'>" . $button['name'] . "</span>";
+        $html .= "<span class='button_name'>" . stripslashes(trim($button['name'])) . "</span>";
 		if(!$show_after_votes || $already_voted_other){
 			$html .= "&nbsp;<span class='braces'>(</span><span class='count_number'>" . $count . "</span><span class='braces'>)</span>";
 		}
@@ -178,7 +178,7 @@ function reaction_buttons_html() {
 	}
 	$html .= "</ul></div>\n";
 
-	return $html;
+    return apply_filters('reaction_buttons_output', $html);
 }
 
 /**
@@ -512,7 +512,7 @@ function reaction_buttons_js_header() {
 			}
 		}
 		jQuery.ajax({
-				type: "post",url: "<?php bloginfo( 'wpurl' ); ?>/wp-admin/admin-ajax.php", dataType: 'json',
+				type: "post",url: "<?php echo site_url("/wp-admin/admin-ajax.php"); ?>", dataType: 'json',
 					data: { action: 'reaction_buttons_increment_button_php', post_id: post_id, button: button, _ajax_nonce: '<?php echo $nonce; ?>' },
 					success: function(data){
 						if(use_percentages){
@@ -536,6 +536,7 @@ function reaction_buttons_js_header() {
 						}
 						if(only_one_vote){
 							jQuery("#reaction_buttons_post" + post_id + " .reaction_button").addClass('voted');
+							jQuery("#reaction_buttons_post" + post_id + " .reaction_button_" + button).addClass('rb_chosen');
 						}
 						else{
 							jQuery("#reaction_buttons_post" + post_id + " .reaction_button_" + button).addClass('voted');
@@ -599,20 +600,23 @@ function reaction_buttons_increment_button_php(){
 	update_post_meta($post_id, "_reaction_buttons_" . $button, ++$current);
 
 	// support for clearing the articles cache if w3total cache is installed
-	if(get_option(reaction_buttons_clear_supported_caches)){
+	if(get_option("reaction_buttons_clear_supported_caches")){
 		// W3 Total Cache
 		if (function_exists('w3tc_pgcache_flush_post')) {
 			w3tc_pgcache_flush_post($post_id);
 		}
+        if ( has_action('ce_clear_post_cache')  ) {
+               do_action('ce_clear_post_cache', $post_id );
+        }
 	}
 
-	if(get_option(reaction_buttons_usecookies)){
-		if ( $_COOKIE["reaction_buttons_" . $post_id] ) {
+	if(get_option("reaction_buttons_usecookies")){
+		if(isset($_COOKIE["reaction_buttons_" . $post_id]) && $_COOKIE["reaction_buttons_" . $post_id]){
 			$json = stripslashes($_COOKIE["reaction_buttons_" . $post_id]);
 			$cookie = json_decode($json, true);
 			if(!is_array($cookie)) $cookie = array();
 		}
-		else {
+		else{
 			$cookie = array();
 		}
 
@@ -710,7 +714,7 @@ add_action('wp_insert_post', 'reaction_buttons_insert_post');
  * Add the Reaction Buttons menu to the Settings menu
  */
 function reaction_buttons_admin_menu() {
-	add_options_page('Reaction buttons', 'Reaction Buttons', 8, 'reaction_buttons', 'reaction_buttons_submenu');
+	add_options_page('Reaction buttons', 'Reaction Buttons', 'manage_options', 'reaction_buttons', 'reaction_buttons_submenu');
 }
 add_action('admin_menu', 'reaction_buttons_admin_menu');
 
@@ -989,7 +993,7 @@ function reaction_buttons_submenu() {
 							$excluded_categories = get_option('reaction_buttons_excluded_categories');
 							foreach ($categories as $cat){
 						?>
-						<input type="checkbox" name="excluded_categories[<?php echo $cat->cat_ID; ?>]"<?php checked($excluded_categories[$cat->cat_ID]); ?> /> <?php echo $cat->name ?><br />
+						<input type="checkbox" name="excluded_categories[<?php echo $cat->cat_ID; ?>]"<?php if(isset($excluded_categories[$cat->cat_ID])){checked($excluded_categories[$cat->cat_ID]);} ?> /> <?php echo $cat->name ?><br />
 						<?php
 							}
 						?>
@@ -1489,8 +1493,8 @@ function reaction_buttons_upgrade_v200(){
 
     foreach($buttons as $button_id=>$button){
         $wpdb->query($wpdb->prepare(
-            "UPDATE $table SET `meta_key` = '_reaction_buttons_$button_id'
-            WHERE `meta_key` = '_reaction_buttons_$button'"
+            "UPDATE $table SET `meta_key` = %s WHERE `meta_key` = %s",
+            'reaction_buttons_' . $button_id, '_reaction_buttons_' . $button
         ));
     }
 }

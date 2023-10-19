@@ -1,8 +1,8 @@
 === Reaction Buttons ===
 Tags: feedback, polls, button, comment, widget, sidebar
 Requires at least: 3.3
-Tested up to: 4.3
-Stable tag: 2.1.0
+Tested up to: 4.8.2
+Stable tag: 2.1.6
 License: GPLv2 or later
 Donate link: https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=MLX3Z7ZD5AJ4Q
 
@@ -47,6 +47,7 @@ Nothing fancy, just like any wordpress addon:
 = What cache plugins are supported for automatic cache refresh? =
 * W3 Total Cache
 * Quickcache seems to be working with an easy workaround, check [hengxis solution in the forums](http://wordpress.org/support/topic/adding-support-for-quick-cache?replies=3#post-4573581)
+* [Cache Enabler Plugin](https://wordpress.org/plugins/cache-enabler/)
 
 = My plugin isn't listed, can you add support? =
 * Sure, use the [wordpress support forums](http://wordpress.org/tags/reaction-buttons?forum_id=10) with a link to the plugin and I'll check it out next time I've got time for the plugin. If you want it fast, check the documentation of the cache plugin and find me the function to delete single page caches. Then it shouldn't be a problem to implement shortly.
@@ -71,6 +72,26 @@ It surely is not secure against somebody with bad intent, since they can just de
 * If you use your own CSS, you'll need to update it! This upgrade changes how the reaction data is saved and will convert automatically. But [saving your wordpress database](http://codex.wordpress.org/WordPress_Backups) just in case is a good idea, especially if you might want to ose an old version.
 
 == Changelog ==
+= 2.1.6 =
+* You should be able to use apostrophes in button names now. 
+
+= 2.1.5 =
+* Added support for the [Cache Enabler Plugin](https://wordpress.org/plugins/cache-enabler/), thanks to [@matthiaspabst](https://wordpress.org/support/users/matthiaspabst/).
+
+= 2.1.4 =
+* Fixed v2.0 upgrade routine
+
+= 2.1.3 =
+* Added filter to conditionally disable the output based on post type. Check [here for an example](https://wordpress.org/support/topic/filter-the-output-for-more-developer-flexibility/). Thanks Matt Cromwell!
+* Fixed deprecated syntax when adding the settings menu, thanks flufftron!
+* fixed some typos and such
+
+= 2.1.2 =
+* Added css-class 'rb-chosen' that is added to the clicked button when only one click is allowed. If you allow to click each button at least once, use the old voted class instead.
+
+= 2.1.1 =
+* fixed https related problem (replaced bloginfo() with site_url())
+
 = 2.1.0 =
 * added the possibilities to sort the buttons by votes
 
