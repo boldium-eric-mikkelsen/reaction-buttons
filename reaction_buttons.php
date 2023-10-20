@@ -163,8 +163,7 @@ function reaction_buttons_html() {
 			}
 		}
 		else{
-			$html .= "' onclick=\"reaction_buttons_increment_button_ajax('" . get_the_ID() . "', '" .
-			$button_id . "');\">";
+			$html .= "' onclick=\"reaction_buttons_increment_button_ajax('" . $button_id . "');\">";
         }
         $html .= "<div>";
         $html .= "<span class='button_name'>" . stripslashes(trim($button['name'])) . "</span>";
