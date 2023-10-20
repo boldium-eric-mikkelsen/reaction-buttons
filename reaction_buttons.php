@@ -466,95 +466,33 @@ add_action('wp_print_styles', 'reaction_buttons_css');
  */
 function reaction_buttons_js_header() {
 	$nonce = wp_create_nonce( 'reaction_buttons' );
-	$already_voted_text = get_option("reaction_buttons_already_voted_text");
-	$only_one_vote = get_option("reaction_buttons_only_one_vote");
-	$show_after_votes = get_option("reaction_buttons_show_after_votes");
-	$use_as_counter = get_option("reaction_buttons_use_as_counter");
-	$use_percentages = get_option("reaction_buttons_percentages", false);
-	$buttons = array_keys(explode(",", preg_replace("/,\s/", ",", get_option('reaction_buttons_button_names'))));
-
-	?>
-	<script	type='text/javascript'><!--
-	function reaction_buttons_increment_button_ajax(post_id, button){
-		var already_voted_text = '<?php echo htmlspecialchars($already_voted_text); ?>';
-		var only_one_vote = <?php echo $only_one_vote ? "true" : "false"; ?>;
-		var show_after_votes = <?php echo $show_after_votes ? "true" : "false"; ?>;
-		var use_as_counter = <?php echo $use_as_counter ? "true" : "false"; ?>;
-		var use_percentages = <?php echo $use_percentages ? "true" : "false"; ?>;
-		var buttons = <?php echo json_encode($buttons); ?>;
-
-		if(!use_as_counter && jQuery("#reaction_buttons_post" + post_id + " .reaction_button_" + button).hasClass('voted')){
-			return;
-		}
-
-		if(!use_as_counter){
-			// remove the href attribute before sending the request to make
-			// sure no one votes more than once by clicking ten times fast
-			if(only_one_vote){
-				// remove all the onclicks from the posts and replace it by the
-				// alert not to vote twice if set
-				if(already_voted_text){
-					jQuery("#reaction_buttons_post" + post_id + " .reaction_button").attr('onclick', 'javascript:alert(\'' + already_voted_text + '\');');
-				}
-				else{
-					jQuery("#reaction_buttons_post" + post_id + " .reaction_button").removeAttr('onclick');
-				}
-			}
-			else{
-				// remove/replace only on the clicked button
-				if(already_voted_text){
-					jQuery("#reaction_buttons_post" + post_id + " .reaction_button_" + button).attr('onclick', 'javascript:alert(\'' + already_voted_text + '\');');
-				}
-				else{
-					jQuery("#reaction_buttons_post" + post_id + " .reaction_button_" + button).removeAttr('onclick');
-				}
-			}
-		}
-		jQuery.ajax({
-				type: "post",url: "<?php echo site_url("/wp-admin/admin-ajax.php"); ?>", dataType: 'json',
-					data: { action: 'reaction_buttons_increment_button_php', post_id: post_id, button: button, _ajax_nonce: '<?php echo $nonce; ?>' },
-					success: function(data){
-						if(use_percentages){
-							var i;
-							var b;
-							for(i = 0; i < buttons.length; ++i){
-								b = buttons[i];
-								jQuery("#reaction_buttons_post" + post_id + " .reaction_button_" + b + " .count_number").html(data['percentage'][b]);
-							}
-						}
-                        else if(show_after_votes){
-							var i;
-							var b;
-							for(i = 0; i < buttons.length; ++i){
-								b = buttons[i];
-								jQuery("#reaction_buttons_post" + post_id + " .reaction_button_" + b + " .count_number").html(data['counts'][b]);
-							}
-						}
-						else{
-							jQuery("#reaction_buttons_post" + post_id + " .reaction_button_" + button + " .count_number").html(data['count']);
-						}
-						if(only_one_vote){
-							jQuery("#reaction_buttons_post" + post_id + " .reaction_button").addClass('voted');
-							jQuery("#reaction_buttons_post" + post_id + " .reaction_button_" + button).addClass('rb_chosen');
-						}
-						else{
-							jQuery("#reaction_buttons_post" + post_id + " .reaction_button_" + button).addClass('voted');
-						}
-                        if(show_after_votes){
-							jQuery("#reaction_buttons_post" + post_id + " .reaction_button .braces").removeAttr('style');
-						}
-					}
-			});
-		}
-	--></script>
-	<?php
-
+	$already_voted_text = htmlspecialchars( get_option("reaction_buttons_already_voted_text") );
+	$buttons = implode(',', array_keys(explode(",", preg_replace("/,\s/", ",", get_option('reaction_buttons_button_names')))));
+	$only_one_vote = get_option("reaction_buttons_only_one_vote") ? 'true' : 'false';
+	$show_after_votes = get_option("reaction_buttons_show_after_votes") ? "true" : "false";
+	$site_url = get_site_url();
+	$use_as_counter = get_option("reaction_buttons_use_as_counter") ? "true" : "false";
+	$use_percentages = get_option("reaction_buttons_percentages", false) ? "true" : "false";	
+	echo "<script
+		id='js-reaction-buttons-config'
+		data-already-voted-text='$already_voted_text'
+		data-buttons='$buttons'
+		data-nonce='$nonce'
+		data-only-one-vote='$only_one_vote'
+		data-site-url='$site_url'
+		data-show-after-votes='$show_after_votes'
+		data-use-as-counter='$use_as_counter'
+		data-use-percentages='$use_percentages'
+	></script>";
 }
 
 // add the javascript stuff
 function reaction_buttons_init(){
-	wp_enqueue_script("jquery");
+	$js = file_get_contents(__FILE__.'/reaction-buttons.js');
+	$js_hash = wp_hash($js);
+	$js_url = plugin_dir_url( __FILE__ ).'reaction-buttons.js';
 	wp_enqueue_script("json2");
+	wp_enqueue_script('reaction-buttons',$js_url, ['jquery'], $js_hash, true);
 }
 
 function reaction_buttons_i18n_init(){
