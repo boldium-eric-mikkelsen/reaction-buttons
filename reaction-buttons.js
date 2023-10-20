@@ -16,12 +16,15 @@ const getPostIDFromBody = () => {
     })
     return postID
 }
-
+const reaction_buttons_already_voted = (el) => {
+    alert(el.dataset.alreadyVotedText);
+}
 /**
  * Reaction Buttons javascript. Uses ajax to get a vote, disable the
  * possibility to vote and refresh the counter.
  */
-function reaction_buttons_increment_button_ajax(post_id, button) {
+function reaction_buttons_increment_button_ajax(el) {
+    const button = el.dataset.buttonId;
     const post_id = getPostIDFromBody();
     const config = document.getElementById('js-reaction-buttons-config').dataset;
     var already_voted_text = config.alreadyVotedText;
@@ -31,7 +34,7 @@ function reaction_buttons_increment_button_ajax(post_id, button) {
     var use_as_counter = JSON.parse(config.useAsCounter);
     var use_percentages = JSON.parse(config.usePercentages);
     var buttons = config.buttons.split(',');
-    if (!use_as_counter && !!document.querySelector(`#reaction_buttons_post${post_id} .reaction_button_${button}.voted`)) {
+    if ( !use_as_counter && el.classList.contains("voted") ) {
         return;
     }
 
@@ -101,3 +104,17 @@ function reaction_buttons_increment_button_ajax(post_id, button) {
         }
     });
 }
+const reactionButton = (button) => {
+    button.addEventListener('click', () => {
+        if (button.dataset.VotedText) {
+            reaction_buttons_already_voted(button);
+        } else {
+            reaction_buttons_increment_button_ajax(button);
+        }
+    })
+}
+const reactionButtons = (selector = '.js-reaction_button') => {
+    const buttons = document.querySelectorAll(selector);
+    buttons.forEach(button => reactionButton(button));
+}
+reactionButtons();
